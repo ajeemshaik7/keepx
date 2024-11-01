@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ username }}</title>
+    <style>
+        /* General styling */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Header area styling */
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: rgb(56, 47, 116);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Username and buttons styling */
+        .username, .logout-button, .save-button ,.website{
+            margin: 0 10px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+            width: fit-content;
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+        }
+        
+        .website{
+            background-color: rgb(255, 255, 255);
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+            font-style:initial;
+            align-content: flex-start;
+        }
+
+        .username {
+
+            background-color: #ffffff;
+            color: #000000;
+            border: 1px solid #ccc;
+        }
+
+        
+        .logout-button {
+            background-color: #000000;
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Content container styling */
+        /* Content container styling */
+.content-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+}
+
+/* User content area styling */
+#user-content {
+    width: 100%;
+    max-width: 100%;
+    height: 400px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    resize: none;
+}
+
+        #message {
+            margin-top: 10px;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header with username and buttons -->
+    <div class="header">
+        <h1 class="website"> KeepY</h1>
+        <span class="username">{{ username }}</span>
+        <button type="button" id="save-button" class="save-button">Save</button>
+        <a href="{% url 'landing_page' %}" class="logout-button">Log Out</a>
+    </div>
+
+    <!-- Content container -->
+    <div class="content-container">
+        <form id="content-form" method="POST" action="{% url 'save_content' %}">
+            {% csrf_token %}
+            <textarea id="user-content" name="content" placeholder="Type your content here...">{{ user_content.content }}</textarea>
+            <input type="hidden" name="username" value="{{ username }}">
+            
+        </form>
+        
+        <!-- Display success or error messages if available -->
+        {% if message %}
+            <div id="message">{{ message }}</div>
+        {% endif %}
+    </div>
+
+    <script>
+        document.getElementById("save-button").onclick = function() {
+            var content = document.getElementById("user-content").value;
+
+            // Make an AJAX request to save the content
+            fetch("{% url 'save_content' %}", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    username: "{{ username }}",  // Pass the username
+                    content: content              // Pass the content
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById("message").innerText = data.message;
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+        };
+    </script>
+
+</body>
+</html>
