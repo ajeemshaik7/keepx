@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landing Page</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* Background image setup */
+        body {
+            background: url('static/myapp/websitebg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #000000;
+        }
+        
+        /* Full viewport height for container */
+        .container {
+            height: 100vh;
+            display: flex;
+            justify-content: flex-end; /* Align content to the right */
+            align-items: center; /* Center vertically */
+            padding-right: 20px; /* Add some padding from the right */
+        }
+        
+        /* Form container styling */
+        .form-container {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            margin-left: 20px; /* Add margin to separate title and form */
+        }
+
+        /* Animated title styles */
+        .animated-title {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .letter {
+            font-size: 6rem; /* Large font size */
+            font-weight: bold; /* Bold text */
+            background-clip: text;
+            color: transparent;
+            background-image: linear-gradient(to right,  yellow, orange);
+            transition: transform 0.2s ease-in-out, color 0.2s ease-in-out; /* Smooth scale and color transition */
+            display: inline-block; /* Ensure hover works properly */
+        }
+
+        .letterx {
+            font-size: 6rem; /* Large font size */
+            font-weight: bold; /* Bold text */
+            background-clip: text;
+            color: transparent;
+            background-image: linear-gradient(to right,  rgb(255, 255, 255), rgb(255, 255, 255));
+            transition: transform 0.2s ease-in-out, color 0.2s ease-in-out; /* Smooth scale and color transition */
+            display: inline-block; /* Ensure hover works properly */
+        }
+
+        .letterx:hover {
+            transform: scale(1.2) rotate(10deg); /* Scale and rotate on hover */
+            background-image: linear-gradient(to right, rgb(6, 23, 123), rgb(7, 4, 50) ); /* Change color on hover */
+        }
+
+        .letter:hover {
+            transform: scale(1.2) rotate(10deg); /* Scale and rotate on hover */
+            background-image: linear-gradient(to right, rgb(255, 255, 255),rgb(255, 255, 255) ); /* Change color on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div>
+            <div class="animated-title">
+                <!-- Animated title with individual letters -->
+                <span class="letter" style="animation: fadeIn 0.5s ease forwards; animation-delay: 0.1s;">K</span>
+                <span class="letter" style="animation: fadeIn 0.5s ease forwards; animation-delay: 0.1s;">e</span>
+                <span class="letter" style="animation: fadeIn 0.5s ease forwards; animation-delay: 0.1s;">e</span>
+                <span class="letter" style="animation: fadeIn 0.5s ease forwards; animation-delay: 0.1s;">p</span>
+                <span class="letterx" style="animation: fadeIn 0.5s ease forwards; animation-delay: 0.1s;">X</span>
+            </div>
+            <div class="form-container">
+                <h1 class="text-center">Welcome  to your space</h1>
+
+                <form id="username-form">
+                    <div class="form-group">
+                        <label for="username">Username:</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    
+                    <!-- Password input field -->
+                    <div id="password-section" style="display: none;">
+                        <div class="form-group">
+                            <label for="password">Password:</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-block" id="login-button" disabled>Login</button>
+                    </div>
+                </form>
+                <div id="message" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            function toggleLoginButton() {
+                const username = $("#username").val();
+                const password = $("#password").val();
+                $("#login-button").prop("disabled", !(username && password));
+            }
+
+            // Show password section and enable button check when username is entered
+            $("#username").on("input", function() {
+                const username = $(this).val();
+                if (username) {
+                    $("#password-section").show();
+                    $("#message").text("");
+                } else {
+                    $("#password-section").hide();
+                }
+                toggleLoginButton();
+            });
+
+            $("#password").on("input", toggleLoginButton);
+
+            // Prevent unauthorized login on button click
+            $("#login-button").on("click", function() {
+                const username = $("#username").val();
+                const password = $("#password").val();
+
+                if (!username || !password) {
+                    $("#message").text("Username and password are required.").addClass("text-danger");
+                    return;
+                }
+
+                $.ajax({
+                    url: "{% url 'login_user' %}",
+                    method: "POST",
+                    data: {
+                        "username": username,
+                        "password": password,
+                        "csrfmiddlewaretoken": "{{ csrf_token }}"
+                    },
+                    dataType: "json",
+                    success: function(response) {
+                        if (response.success) {
+                            window.location.href = response.redirect_url;
+                        } else {
+                            $("#message").text(response.message).removeClass().addClass("text-danger");
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+
+    <style>
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</body>
+</html>

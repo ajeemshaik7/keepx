@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ username }}</title>
+    <style>
+        /* General styling */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Header area styling */
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: rgb(0, 0, 0);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Username and buttons styling */
+        .username, .logout-button, .save-button, .website {
+            margin: 0 10px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-size: 15px;
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+        }
+        
+        .website {
+            background-color: rgb(255, 255, 255);
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+            font-style: initial;
+            color: black;
+        }
+
+        .username {
+            background-color: #ffffff;
+            color: #000000;
+            border: 1px solid #ccc;
+        }
+
+        .save-button, .logout-button {
+            background: linear-gradient(to right, #4CAF50, #45A049);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .logout-button {
+            background: linear-gradient(to right, #e63946, #d62828);
+        }
+
+        .save-button:disabled, .logout-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .save-button:hover, .logout-button:hover {
+            transform: scale(1.05);
+        }
+
+        .save-button:active, .logout-button:active {
+            transform: scale(0.95);
+        }
+
+        .loading-spinner {
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #message {
+            margin-top: 10px;
+            color: #28a745;
+        }
+
+        /* Content container styling */
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            width: 400%;
+            
+            text-align: center;
+        }
+
+        /* User content area styling */
+        #user-content {
+            width: 100%;
+            
+            height: 400px;
+            
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header with username and buttons -->
+    <div class="header">
+       
+        <span class="username">{{ username }}</span>
+        <button type="button" id="save-button" class="save-button">
+            <span id="save-text">Save</span>
+            <div id="save-loading-spinner" class="loading-spinner" style="display: none;"></div>
+        </button>
+        <button type="button" id="logout-button" class="logout-button">
+            <span id="logout-text">Logout</span>
+            <div id="logout-loading-spinner" class="loading-spinner" style="display: none;"></div>
+        </button>
+    </div>
+
+    <!-- Content container -->
+    <div class="content-container">
+        <form id="content-form" method="POST" action="{% url 'save_content' %}">
+            {% csrf_token %}
+            <textarea id="user-content" name="content" placeholder="Type your content here...">{{ user_content.content }}</textarea>
+            <input type="hidden" name="username" value="{{ username }}">
+        </form>
+        
+        <!-- Display success or error messages if available -->
+        {% if message %}
+            <div id="message">{{ message }}</div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Save button functionality with loading animation
+        document.getElementById("save-button").onclick = function() {
+            const saveButton = document.getElementById("save-button");
+            const saveText = document.getElementById("save-text");
+            const saveLoadingSpinner = document.getElementById("save-loading-spinner");
+            
+            saveButton.disabled = true;
+            saveText.style.display = "none";
+            saveLoadingSpinner.style.display = "inline-block";
+
+            var content = document.getElementById("user-content").value;
+
+            // Make an AJAX request to save the content
+            fetch("{% url 'save_content' %}", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    username: "{{ username }}",
+                    content: content
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById("message").innerText = data.message;
+                saveButton.disabled = false;
+                saveText.style.display = "inline";
+                saveLoadingSpinner.style.display = "none";
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+                saveButton.disabled = false;
+                saveText.style.display = "inline";
+                saveLoadingSpinner.style.display = "none";
+            });
+        };
+
+        // Logout button functionality with loading animation
+        document.getElementById("logout-button").onclick = function() {
+            const logoutButton = document.getElementById("logout-button");
+            const logoutText = document.getElementById("logout-text");
+            const logoutLoadingSpinner = document.getElementById("logout-loading-spinner");
+
+            logoutButton.disabled = true;
+            logoutText.style.display = "none";
+            logoutLoadingSpinner.style.display = "inline-block";
+
+            // Simulate a logout delay
+            setTimeout(() => {
+                logoutButton.disabled = false;
+                logoutText.style.display = "inline";
+                logoutLoadingSpinner.style.display = "none";
+                window.location.href = "{% url 'landing_page' %}"; // Redirect to the landing page
+            }, 500);
+        };
+    </script>
+
+</body>
+</html>
